@@ -1,10 +1,12 @@
 ---
-output: pdf_document
+output: html_document
 ---
-Examining impact of severe weather events on public health and economy. 
+Examining impact of severe weather events on public health and economy
 ========================================================
 
 ## Synopsis
+
+In the report below, we determine the impact of severe weather events on population health and economy. The data is obtained from the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. The impact on population health is evaluated by determining the average fatalities and injuries per event type. From the results, it is clear heat related events & hurricanes cause the most damage to population health. To determine the impact on the econnomy, we compute the total monetry loss based on property damage and crop damange. The total monetry loss is then averaged based on each event type. In terms of economic consequences, hurricanes & typhoons are by far the most damaging weather event. 
 
 ##  Data Processing
 
@@ -60,7 +62,7 @@ summary(storm.data$INJURIES)
 
 From the summaries, we see that median & 3rd quartile for both Injuries and Fatalities is zero. However, the max value is large for both the variables. Hence, the data distribution is long tailed. 
 
-To calculate the total impact on human population and economy, we need to sum up the fatalities, injuries & total cash loss for all event types across the dataset. The dataset is melted with to retain only required variables. It is then re-cast to compute the sum for each variable. 
+To calculate the total impact on human population and economy, we need to sum up the fatalities, injuries & total cash loss for all event types across the dataset. The dataset is melted with reshape2 package to retain only required variables. It is then re-cast to compute the sum for each variable. 
 
 ```{r reshaping data,cache=TRUE, message=FALSE}
 require(reshape2)
@@ -73,38 +75,30 @@ The events which have caused the most harm to population health are:
 head(storm.dcast.sum[order(storm.dcast.sum$FATALITIES,decreasing=TRUE),c(1,2)],5)
 head(storm.dcast.sum[order(storm.dcast.sum$INJURIES,decreasing=TRUE),c(1,3)],5)
 ```
-Clearly, TORNADOS have been the most deadly natural disaster over the past 50 years. 
+Clearly, TORNADOS have caused the most damage to population health in the last 60 years. 
 
-The events which have caused the most economic damage are:
+In terms of economic consequences, the most damaging weather events are: 
 ```{r top events economy}
 head(storm.dcast.sum[order(storm.dcast.sum$TOTALCASH,decreasing=TRUE),c(1,4)],5)
 ```
 
+However, it may be more interesting to see the average impact of each EVENT type. We will explore this relationship in the next section. 
+
 
 ## Results
-<figure>
-```{r plots, message=FALSE}
-require(ggplot2)
-require(gridExtra)
-g1 <- ggplot(head(storm.dcast.sum[order(storm.dcast.sum$FATALITIES,decreasing=TRUE),c(1,2)],5), aes(x=EVTYPE, y=FATALITIES)) + geom_bar(stat="identity", fill = "blue") + xlab("Severe Weather Event") + ylab("Total Fatalities")
-g2 <- ggplot(head(storm.dcast.sum[order(storm.dcast.sum$INJURIES,decreasing=TRUE),c(1,3)],5), aes(x=EVTYPE, y=INJURIES)) + geom_bar(stat="identity", fill = "blue") + xlab("Severe Weather Event") + ylab("Total Injuries")
-#g3 <- ggplot(head(storm.final.sub[order(storm.final.sub$FATALITIES.per.event,decreasing=T),c(1,2,4,5)],5),aes(x=EVTYPE, y=FATALITIES.per.event)) + geom_bar(stat="identity", fill = "green4") 
-#g4 <- ggplot(head(storm.final.sub[order(storm.final.sub$INJURIES.per.event,decreasing=T),c(1,3,4,6)],5),aes(x=EVTYPE, y=INJURIES.per.event)) + geom_bar(stat="identity", fill = "green4") 
 
-grid.arrange(g1,g2)
-```
-<figcaption> Figure 1: Impact of severe weather events on population health </figcaption>
-</figure>
+To explore the average impact of each event, a new dataset with the frequency of each event is created. This is merged with the existing casted dataset to generate a new dataset. 
 
-It is also interesting to look at the total events recorded per event type.
 ```{r total events}
 EVTYPE.table <- as.data.frame(table(storm.data$EVTYPE))
 names(EVTYPE.table) <- c("EVTYPE", "Freq")
 storm.final <- merge(storm.dcast.sum, EVTYPE.table)
-head(storm.final[order(storm.final$Freq,decreasing = TRUE),],5)
+tornados <- storm.final[storm.final$EVTYPE=="TORNADO",]
 ```
 
-From the results, we note that the most frequent events have been HAIL, WIND & TORNADOS. It also interesting to determine the fatalities and injuries per event recorded. To do this, we can divide the total fatalities/injuries by the total events recorded. In the analysis, we have excluded any events that have seen fewer than 20 occurances in the dataset. 
+From the above dataset, there have been `r tornados[5]` tornadoes in the United States over the last 60 years. This explains the larger number of injuries seen due to tornadoes.
+
+Now, we investigate the average impact per event type. To do this, we can divide the total fatalities, injuries & total cash loss by the total events recorded. In the analysis, we have excluded any events that have seen fewer than 20 occurances in the dataset.
 
 ```{r per event, cache=TRUE}
 storm.final$FATALITIES.per.event <- storm.final$FATALITIES/storm.final$Freq
@@ -113,17 +107,31 @@ storm.final$TOTALCASH.per.event <- storm.final$TOTALCASH/storm.final$Freq
 storm.final.sub <- subset(storm.final, storm.final$Freq > 20)
 ```
 
-The most harmful natural disasters in terms of injuries and fatalities per occurance are:
+The following plots represent the average impact per event type on fatalities, injuries & total cash loss. 
 
-```{r injuries per event}
-head(storm.final.sub[order(storm.final.sub$INJURIES.per.event,decreasing=T),c(1,3,5,7)])
+<figure>
+```{r fatality plots, message=FALSE}
+require(ggplot2)
+ggplot(head(storm.final.sub[order(storm.final.sub$FATALITIES.per.event,decreasing=TRUE),],5), aes(x=EVTYPE, y=FATALITIES.per.event)) + geom_bar(stat="identity", fill = "blue") + xlab("Severe Weather Event") + ylab("Average Fatalities per Event Type")
 ```
+<figcaption> Figure 1: Average Impact of severe weather events on fatalities </figcaption>
+</figure>
 
-```{r fatalities per event}
-head(storm.final.sub[order(storm.final.sub$FATALITIES.per.event,decreasing=T),c(1,2,5,6)])
+<figure>
+```{r injury plots, message=FALSE}
+ggplot(head(storm.final.sub[order(storm.final.sub$INJURIES.per.event,decreasing=TRUE),],5), aes(x=EVTYPE, y=INJURIES.per.event)) + geom_bar(stat="identity", fill = "blue") + xlab("Severe Weather Event") + ylab("Average Injuries per Event Type")
 ```
+<figcaption> Figure 2: Average Impact of severe weather events on injuries </figcaption>
+</figure>
 
-The most harmful natural disasters in terms of total cash loss per occurance are:
-```{r Total cash per event}
-head(storm.final.sub[order(storm.final.sub$TOTALCASH.per.event,decreasing=T),c(1,4,5,8)])
+From the above figures, we can see that the **Heat related events (Heat Wave, Extereme Heat, Excessive Heat)** are most damaging in terms of fatalities. **Hurricanes and Heat related events** cause the most injuries per event.  
+
+<figure>
+```{r cash plots, message=FALSE}
+ggplot(head(storm.final.sub[order(storm.final.sub$TOTALCASH.per.event,decreasing=TRUE),],5), aes(x=EVTYPE, y=TOTALCASH.per.event)) + geom_bar(stat="identity", fill = "blue") + xlab("Severe Weather Event") + ylab("Average Cash loss per Event Type")
 ```
+<figcaption> Figure 3: Average Impact of severe weather events on economy </figcaption>
+</figure>
+
+
+**Hurricanes/Typhoons** have the greatest consequences on the economy. On average, each hurricane has caused a total monetry loss of $800M. 
