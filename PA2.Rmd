@@ -75,7 +75,7 @@ The events which have caused the most harm to population health are:
 head(storm.dcast.sum[order(storm.dcast.sum$FATALITIES,decreasing=TRUE),c(1,2)],5)
 head(storm.dcast.sum[order(storm.dcast.sum$INJURIES,decreasing=TRUE),c(1,3)],5)
 ```
-Clearly, TORNADOS have caused the most damage to population health in the last 60 years. 
+Clearly, TORNADOS have caused the most damage to population health (in terms of total injuries and fatalities) in the last 60 years. 
 
 In terms of economic consequences, the most damaging weather events are: 
 ```{r top events economy}
@@ -107,7 +107,7 @@ storm.final$TOTALCASH.per.event <- storm.final$TOTALCASH/storm.final$Freq
 storm.final.sub <- subset(storm.final, storm.final$Freq > 20)
 ```
 
-The following plots represent the average impact per event type on fatalities, injuries & total cash loss. 
+The following plots represent the average impact per event type on fatalities, injuries & total cash loss. We only plot the top 5 events to keep the plots readable. 
 
 <figure>
 ```{r fatality plots, message=FALSE}
